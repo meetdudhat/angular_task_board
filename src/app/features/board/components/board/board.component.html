@@ -1,0 +1,130 @@
+<div class="board-shell">
+
+  <!-- ── Topbar ──────────────────────────────────────────────────────────── -->
+  <header class="topbar" @fadeSlideIn>
+    <div class="topbar-left">
+      <span class="logo">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <rect x="3" y="3" width="7" height="18" rx="1"/>
+          <rect x="14" y="3" width="7" height="11" rx="1"/>
+          <rect x="14" y="17" width="7" height="4" rx="1"/>
+        </svg>
+        TaskFlow
+      </span>
+    </div>
+
+    <div class="topbar-center">
+      <div class="search-box">
+        <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input
+          type="text"
+          placeholder="Search tasks by title, description or tag..."
+          [value]="searchQuery()"
+          (input)="onSearchInput($event)"
+          aria-label="Search tasks"
+        >
+        <button
+          class="search-clear"
+          *ngIf="searchQuery()"
+          (click)="clearSearch()"
+          aria-label="Clear search"
+        >×</button>
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <!-- Theme toggle -->
+      <button class="btn-toolbar" (click)="toggleTheme()" [attr.aria-label]="isDark() ? 'Switch to light mode' : 'Switch to dark mode'" title="Toggle theme">
+        <svg *ngIf="!isDark()" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+        <svg *ngIf="isDark()" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </button>
+
+      <!-- Reset demo -->
+      <button class="btn-toolbar" (click)="resetBoard()" title="Reset to demo data" aria-label="Reset board">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ── Board canvas ────────────────────────────────────────────────────── -->
+  <main class="board-canvas">
+
+    <!-- Column drag list (reorder columns) -->
+    <div
+      cdkDropList
+      cdkDropListOrientation="horizontal"
+      [cdkDropListData]="board().columns"
+      (cdkDropListDropped)="onColumnDrop($event)"
+      class="columns-track"
+    >
+
+      <!-- Each column is draggable -->
+      <div cdkDrag *ngFor="let col of board().columns; trackBy: trackByColumnId" class="column-drag-wrapper">
+
+        <!-- CDK custom drag handle — the column header acts as the handle -->
+        <div *cdkDragPlaceholder class="column-placeholder"></div>
+
+        <app-column
+          [column]="col"
+          [connectedTo]="columnIds()"
+          [searchQuery]="searchQuery()"
+          (taskDropped)="onTaskDropped($event)"
+          (addTask)="openAddModal(col.id)"
+          (editTask)="openEditModal($event, col.id)"
+          (deleteTask)="onTaskDeleted(col.id, $event)"
+          (deleteColumn)="deleteColumn(col.id)"
+          (titleChanged)="onColumnTitleChanged(col.id, $event)"
+        />
+      </div>
+
+      <!-- Add new column -->
+      <div class="add-column-wrapper">
+        <div class="add-column-form" *ngIf="showAddColumn()">
+          <input
+            type="text"
+            [(ngModel)]="newColumnTitle"
+            placeholder="Column name..."
+            (keydown.enter)="addColumn()"
+            (keydown.escape)="showAddColumn.set(false)"
+            autofocus
+            class="add-col-input"
+          >
+          <div class="add-col-actions">
+            <button class="btn btn-primary" (click)="addColumn()">Add column</button>
+            <button class="btn btn-ghost" (click)="showAddColumn.set(false)">Cancel</button>
+          </div>
+        </div>
+
+        <button
+          *ngIf="!showAddColumn()"
+          class="btn-add-column"
+          (click)="showAddColumn.set(true)"
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          New column
+        </button>
+      </div>
+
+    </div>
+  </main>
+
+</div>
+
+<!-- ── Task modal (rendered outside board-shell for correct stacking) ──── -->
+<app-task-modal
+  *ngIf="showModal()"
+  [task]="editingTask()"
+  [columnId]="activeColumnId()!"
+  (save)="onTaskSaved($event)"
+  (close)="closeModal()"
+/>

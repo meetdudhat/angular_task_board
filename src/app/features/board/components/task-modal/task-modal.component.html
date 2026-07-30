@@ -1,0 +1,74 @@
+<div class="modal-backdrop" @backdropFade (click)="onBackdropClick($event)">
+  <div class="modal-card" @modalEnter role="dialog" aria-modal="true" [attr.aria-label]="isEditMode ? 'Edit task' : 'Add task'">
+
+    <div class="modal-header">
+      <h2>{{ isEditMode ? 'Edit task' : 'New task' }}</h2>
+      <button class="btn-icon" (click)="close.emit()" aria-label="Close modal">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+
+      <!-- Title -->
+      <div class="field" [class.field--error]="form.get('title')?.invalid && form.get('title')?.touched">
+        <label for="task-title">Title <span class="required">*</span></label>
+        <input id="task-title" type="text" formControlName="title" placeholder="e.g. Design the login screen" autocomplete="off">
+        <span class="error-msg" *ngIf="form.get('title')?.hasError('required') && form.get('title')?.touched">Title is required.</span>
+        <span class="error-msg" *ngIf="form.get('title')?.hasError('minlength') && form.get('title')?.touched">Must be at least 3 characters.</span>
+        <span class="error-msg" *ngIf="form.get('title')?.hasError('maxlength') && form.get('title')?.touched">Max 80 characters.</span>
+      </div>
+
+      <!-- Description -->
+      <div class="field">
+        <label for="task-desc">Description</label>
+        <textarea id="task-desc" formControlName="description" rows="3" placeholder="Add some context or acceptance criteria..."></textarea>
+        <span class="char-count">{{ form.get('description')?.value?.length ?? 0 }}/300</span>
+      </div>
+
+      <!-- Priority + Due date row -->
+      <div class="field-row">
+        <div class="field">
+          <label for="task-priority">Priority</label>
+          <select id="task-priority" formControlName="priority">
+            <option *ngFor="let p of priorities" [value]="p">{{ p | titlecase }}</option>
+          </select>
+        </div>
+
+        <div class="field" [class.field--error]="form.get('dueDate')?.invalid && form.get('dueDate')?.touched">
+          <label for="task-due">Due date</label>
+          <input id="task-due" type="date" formControlName="dueDate">
+          <span class="error-msg" *ngIf="form.get('dueDate')?.hasError('pastDate') && form.get('dueDate')?.touched">Due date can't be in the past.</span>
+        </div>
+      </div>
+
+      <!-- Tags -->
+      <div class="field">
+        <label>Tags <span class="hint">(press Enter or comma to add, max 5)</span></label>
+        <div class="tag-input-wrapper">
+          <span class="tag-chip" *ngFor="let tag of tagsArray">
+            {{ tag }}
+            <button type="button" (click)="removeTag(tag)" [attr.aria-label]="'Remove tag ' + tag">×</button>
+          </span>
+          <input
+            type="text"
+            [(ngModel)]="tagInput"
+            [ngModelOptions]="{standalone: true}"
+            (keydown)="onTagKeydown($event)"
+            placeholder="{{ tagsArray.length < 5 ? 'Add a tag...' : 'Max tags reached' }}"
+            [disabled]="tagsArray.length >= 5"
+          >
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" (click)="close.emit()">Cancel</button>
+        <button type="submit" class="btn btn-primary">{{ isEditMode ? 'Save changes' : 'Add task' }}</button>
+      </div>
+
+    </form>
+  </div>
+</div>

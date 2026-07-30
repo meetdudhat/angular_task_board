@@ -1,0 +1,78 @@
+<div class="column" [id]="column.id">
+
+  <!-- Column header -->
+  <div class="column-header">
+
+    <!-- Inline editable title -->
+    <div class="column-title-wrapper">
+      <input
+        *ngIf="isEditingTitle()"
+        class="title-input"
+        [(ngModel)]="editTitle"
+        (blur)="commitTitleEdit()"
+        (keydown)="onTitleKeydown($event)"
+        autofocus
+      />
+      <h3
+        *ngIf="!isEditingTitle()"
+        class="column-title"
+        (dblclick)="startTitleEdit()"
+        title="Double-click to rename"
+      >{{ column.title }}</h3>
+    </div>
+
+    <div class="column-meta">
+      <!-- Task count badge -->
+      <span class="task-count">{{ (column.tasks | filterTasks : searchQuery).length }}</span>
+
+      <!-- Delete column -->
+      <button class="btn-icon" (click)="deleteColumn.emit()" aria-label="Delete column" title="Delete column">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+  </div>
+
+  <!-- Drop list for tasks -->
+  <div
+    cdkDropList
+    [id]="column.id"
+    [cdkDropListData]="column.tasks"
+    [cdkDropListConnectedTo]="connectedTo"
+    (cdkDropListDropped)="taskDropped.emit($event)"
+    appHighlightDrop
+    class="task-list"
+  >
+    <div
+      cdkDrag
+      [cdkDragData]="task"
+      *ngFor="let task of column.tasks | filterTasks : searchQuery; trackBy: trackById"
+    >
+      <!-- Custom drag preview — prevents the card from looking distorted mid-drag -->
+      <div *cdkDragPlaceholder class="drag-placeholder"></div>
+
+      <app-task-card
+        [task]="task"
+        [columnId]="column.id"
+        (edit)="editTask.emit($event)"
+        (delete)="deleteTask.emit($event)"
+      />
+    </div>
+
+    <!-- Empty state -->
+    <div class="empty-state" *ngIf="(column.tasks | filterTasks : searchQuery).length === 0">
+      <p>{{ searchQuery ? 'No matching tasks' : 'No tasks yet — add one below' }}</p>
+    </div>
+  </div>
+
+  <!-- Quick-add button -->
+  <button class="btn-add-task" (click)="addTask.emit()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+    </svg>
+    Add task
+  </button>
+
+</div>
